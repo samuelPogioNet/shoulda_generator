@@ -1,3 +1,6 @@
+require File.join(File.dirname(__FILE__), 'create')
+require File.join(File.dirname(__FILE__), 'modeled_generator')
+
 #--
 # ShouldaScaffoldGeneratorConfig based on rubygems code.
 # Thank you Chad Fowler, Rich Kilmer, Jim Weirich and others.
@@ -56,8 +59,9 @@ class ShouldaScaffoldGeneratorConfig
   end
 end
 
-class ShouldaScaffoldGenerator < Rails::Generator::NamedBase
-  default_options :skip_timestamps => false, :skip_migration => false, :skip_layout => true
+class ShouldaScaffoldGenerator < ModeledGenerator #Rails::Generator::NamedBase
+  default_options :skip_timestamps => false, :skip_migration => false, :skip_layout => true,
+    :use_exiting_model => false
 
   attr_reader   :controller_name,
                 :controller_class_path,
@@ -67,7 +71,8 @@ class ShouldaScaffoldGenerator < Rails::Generator::NamedBase
                 :controller_class_name,
                 :controller_underscore_name,
                 :controller_singular_name,
-                :controller_plural_name
+                :controller_plural_name,
+                :path_singular_name, :path_plural_name, :route_namespaces
   alias_method  :controller_file_name,  :controller_underscore_name
   alias_method  :controller_table_name, :controller_plural_name
 
@@ -86,6 +91,11 @@ class ShouldaScaffoldGenerator < Rails::Generator::NamedBase
     else
       @controller_class_name = "#{@controller_class_nesting}::#{@controller_class_name_without_nesting}"
     end
+    @path_singular_name = (class_path + [singular_name]).join '_'
+    @path_plural_name = (class_path + [plural_name]).join '_'
+    @route_namespaces = class_path
+    update_model_info() if options[:use_exiting_model]
+    self
   end
 
   def manifest
@@ -126,9 +136,8 @@ class ShouldaScaffoldGenerator < Rails::Generator::NamedBase
       m.template("functional_test/#{functional_test_style}.rb", File.join('test/functional', controller_class_path, "#{controller_file_name}_controller_test.rb"))
       m.template('helper.rb',          File.join('app/helpers',     controller_class_path, "#{controller_file_name}_helper.rb"))
 
-      m.route_resources controller_file_name
-
-      m.dependency 'shoulda_model', [name] + @args, :collision => :skip
+      m.route_resources(route_namespaces + [controller_file_name])
+      m.dependency 'shoulda_model', [name] + @args, :collision => :skip unless options[:use_exiting_model]
     end
   end
 
@@ -143,7 +152,7 @@ class ShouldaScaffoldGenerator < Rails::Generator::NamedBase
   protected
     # Override with your own usage banner.
     def banner
-      "Usage: #{$0} scaffold ModelName [field:type, field:type]"
+      "Usage: #{$0} scaffold ModelName [-e | field:type, field:type, etc..]"
     end
 
     def add_options!(opt)
@@ -155,8 +164,8 @@ class ShouldaScaffoldGenerator < Rails::Generator::NamedBase
              "Don't generate a migration file for this model") { |v| options[:skip_migration] = v }
       opt.on("--templating [erb|haml]", "Specify the templating to use (haml by default)") { |v| options[:templating] = v }
       opt.on("--functional-test-style [basic|should_be_restful]", "Specify the style of the functional test (should_be_restful by default)") { |v| options[:functional_test_style] = v }
-      
-     end
+      opt.on("-e", "--existing_model", "Use existing model instead of fields params") { |v| options[:use_exiting_model] = v }
+    end
 
     def scaffold_views
       %w[ index show new edit _form ]
