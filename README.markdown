@@ -61,6 +61,7 @@ Usage is the same as the default Rails generators.
 
     $ script/generate shoulda_model post title:string body:text published:boolean 
     $ script/generate shoulda_scaffold post title:string body:text published:boolean
+    $ script/generate shoulda_scaffold admin/post --existing_model
 
 
 ## Configuring it

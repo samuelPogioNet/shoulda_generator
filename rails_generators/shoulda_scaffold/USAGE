@@ -5,6 +5,10 @@ Description:
 
     Pass the name of the model, either CamelCased or under_scored, as the first
     argument, and an optional list of attribute pairs.
+    You can also use a namespace, admin/my_model, for example. If the you want 
+    to create a new model, it will be created with this namespace, whereas you
+    want to use a existing model, controllers will use namespaced model or 
+    no-namespace one if previous was not found
 
     Attribute pairs are column_name:sql_type arguments specifying the
     model's attributes. Timestamps are added by default, so you don't have to
@@ -18,6 +22,9 @@ Description:
     the create/show/update/destroy, forms to create and edit your posts, and
     an index that lists them all, as well as a map.resources :posts
     declaration in config/routes.rb.
+
+    You can use the -e option to generate model from an existing model. If you do 
+    that, You don't have to type fields, they 'll be found from the specified model.
     
     You can override the default values for templating and
     functional\_test\_style by placing a .shoulda\_generator file in your home
@@ -32,3 +39,4 @@ Examples:
     `./script/generate shoulda_scaffold post` # no attributes, view will be anemic
     `./script/generate shoulda_scaffold post title:string body:text published:boolean`
     `./script/generate shoulda_scaffold purchase order_id:integer amount:decimal`
+    `./script/generate shoulda_scaffold admin/purchase -e`
